@@ -436,7 +436,11 @@ CF_TEST(membership_evidence_provenance_is_recorded_per_decision) {
   admission.rack_reference.evidence = admission.evidence;
   CF_EXPECT_EQ(engine.submit(admission).outcome, MutationOutcome::Accepted);
 
-  const RackRecord& admitted = engine.state().racks.at(fixture.rack);
+  // engine.state() returns by value: the record must outlive the temporary state
+  // object, because a map element is a heap node, not a subobject whose lifetime
+  // the reference would extend.
+  const ClusterState admitted_state = engine.state();
+  const RackRecord& admitted = admitted_state.racks.at(fixture.rack);
   CF_EXPECT_EQ(admitted.membership_evidence.provenance, EvidenceProvenance::Measured);
   CF_EXPECT_EQ(admitted.membership_evidence.observed_at, engine.now());
   CF_EXPECT(admitted.membership_evidence.is_current());
@@ -448,7 +452,8 @@ CF_TEST(membership_evidence_provenance_is_recorded_per_decision) {
   unavailable.authority.publication = PublicationGeneration::from_raw(2);
   unavailable.evidence = engine.evidence(EvidenceProvenance::Reported);
   CF_EXPECT_EQ(engine.submit(unavailable).outcome, MutationOutcome::Accepted);
-  const RackRecord& changed = engine.state().racks.at(fixture.rack);
+  const ClusterState changed_state = engine.state();
+  const RackRecord& changed = changed_state.racks.at(fixture.rack);
   CF_EXPECT_EQ(changed.membership_evidence.provenance, EvidenceProvenance::Reported);
   CF_EXPECT_EQ(changed.membership_evidence.observed_at, engine.now());
 
@@ -458,7 +463,8 @@ CF_TEST(membership_evidence_provenance_is_recorded_per_decision) {
   synthetic.authority.publication = PublicationGeneration::from_raw(3);
   synthetic.evidence = engine.evidence(EvidenceProvenance::Synthetic);
   CF_EXPECT_EQ(engine.submit(synthetic).outcome, MutationOutcome::NoChange);
-  const RackRecord& unchanged = engine.state().racks.at(fixture.rack);
+  const ClusterState unchanged_state = engine.state();
+  const RackRecord& unchanged = unchanged_state.racks.at(fixture.rack);
   CF_EXPECT_EQ(unchanged.membership_evidence.provenance, EvidenceProvenance::Reported);
   CF_EXPECT_EQ(unchanged.membership_evidence.observed_at,
                Timestamp::from_unix_millis(1'001'000));
