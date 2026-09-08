@@ -229,8 +229,10 @@ Rules that make replay ineffective:
   `TOPOLOGY_GENERATION_ADVANCED`, `RACK_GENERATION_SUPERSEDED`, `RACK_WITHDRAWN`,
   `RACK_RETIRED`, `RACK_BOOT_FENCED`, `RACK_REVALIDATION_REQUIRED`, the per-class
   `*_DOMAIN_SUPERSEDED` reasons, `CONNECTIVITY_SUPERSEDED`, `HEALTH_SUPERSEDED`,
-  `LIFECYCLE_NOT_CONSUMABLE` (`src/snapshot.cpp:17`). A view is current only when that list
-  is empty, and consumable only when it is also current and the lifecycle is consumable.
+  `LIFECYCLE_NOT_CONSUMABLE` (`src/snapshot.cpp:17`). A view is current when every generation
+  it was bound to still matches authority: `LIFECYCLE_NOT_CONSUMABLE` is reported as a typed
+  reason but does not by itself make a generationally correct view stale. It is consumable
+  only when it is current *and* the cluster lifecycle may be acted on.
 - **Heartbeats are checked too.** A heartbeat with a foreign cluster, stale coordinator epoch or
   stale cluster epoch is answered with the corresponding rejection rather than accepted
   (`src/coordinator_network.cpp:629`).
