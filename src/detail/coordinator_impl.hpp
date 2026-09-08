@@ -156,6 +156,10 @@ struct ClusterCoordinator::Impl {
   std::condition_variable queue_condition;
   std::deque<detail::QueueItem> queue;
   bool stopping = false;
+  /// True while the commit thread is live. A coordinator that was never started
+  /// (or has been stopped) must refuse a mutation instead of waiting forever for
+  /// a result that no thread will ever produce.
+  std::atomic<bool> running{false};
   std::thread commit_thread;
 
   /// Network.

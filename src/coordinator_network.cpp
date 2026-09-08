@@ -747,6 +747,15 @@ void ClusterCoordinator::Impl::run_session(const std::shared_ptr<detail::Session
 }
 
 void ClusterCoordinator::Impl::stop() {
+  // Stop accepting mutations immediately: submit() must never wait for a
+  // commit thread that is about to exit. The shutdown flag is published under
+  // the queue lock first so a racing submit() reports SHUTTING_DOWN rather than
+  // waiting for a result.
+  {
+    std::lock_guard<std::mutex> lock(queue_mutex);
+    stopping = true;
+  }
+  running.store(false);
   if (accepting.exchange(false)) {
     if (listener != detail::kInvalidSocket) {
       detail::shutdown_socket(listener);

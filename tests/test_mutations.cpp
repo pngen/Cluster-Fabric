@@ -425,6 +425,41 @@ class RecordingHook final : public CommitHook {
 }  // namespace
 
 // ---------------------------------------------------------------------------
+// Lifecycle guard
+// ---------------------------------------------------------------------------
+
+CF_TEST(mutation_submit_before_start_is_refused_not_hung) {
+  // A coordinator that was never started has no commit thread, so a mutation
+  // must be refused with a typed reason rather than waiting forever for a
+  // result that no thread will produce. The same holds after stop().
+  MemoryPersistenceStore store;
+  ClusterCoordinator coordinator{CoordinatorConfig{}, &store};
+
+  MutationRequest request;
+  request.kind = MutationKind::DeclareCluster;
+  request.cluster = *ClusterId::parse("not-started-cluster");
+  request.authority.cluster_epoch = ClusterEpoch::from_raw(1);
+  request.declared_lifecycle = ClusterLifecycle::Declared;
+  request.readiness_contract = ReadinessContract::permissive();
+  request.evidence = EvidenceStamp::make(EvidenceProvenance::Reported, default_clock().now(), 30'000);
+
+  const MutationResult before_start = coordinator.submit(request);
+  CF_EXPECT_EQ(before_start.outcome, MutationOutcome::Rejected);
+  CF_EXPECT_EQ(before_start.reason, RejectionReason::NotReady);
+  CF_EXPECT_EQ(before_start.error.reason, std::string("not_running"));
+
+  const CoordinatorStartOutcome started = coordinator.start();
+  CF_EXPECT(started.ok);
+  CF_EXPECT_EQ(coordinator.submit(request).outcome, MutationOutcome::Accepted);
+  coordinator.stop();
+
+  const MutationResult after_stop = coordinator.submit(request);
+  CF_EXPECT_EQ(after_stop.outcome, MutationOutcome::Rejected);
+  CF_EXPECT(after_stop.reason == RejectionReason::NotReady ||
+            after_stop.reason == RejectionReason::ShuttingDown);
+}
+
+// ---------------------------------------------------------------------------
 // One case per MutationKind
 // ---------------------------------------------------------------------------
 

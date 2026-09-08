@@ -94,6 +94,12 @@ using namespace cluster_fabric;
 MemoryPersistenceStore store;                 // or FilePersistenceStore("/var/lib/cf.state")
 ClusterCoordinator coordinator{CoordinatorConfig{}, &store};
 
+const CoordinatorStartOutcome started = coordinator.start();
+if (!started.ok) { /* started.status and started.error explain why */ }
+// ... submit mutations here; submit() refuses with NOT_READY if start() was
+// ... submit mutations here ...
+// submit() refuses with NOT_READY if start() was never called, or after stop().
+
 MutationRequest declare;
 declare.kind = MutationKind::DeclareCluster;
 declare.cluster = *ClusterId::parse("prod-east");
@@ -103,6 +109,8 @@ declare.readiness_contract = ReadinessContract::permissive();
 declare.evidence = EvidenceStamp::make(EvidenceProvenance::Reported, default_clock().now(), 30'000);
 const MutationResult declared = coordinator.submit(declare);
 if (!declared.accepted()) { /* declared.reason and declared.error explain exactly why */ }
+
+coordinator.stop();
 ```
 
 Every mutation is accepted, refused, or reported as `NoChange`/`RevalidationRequired`

@@ -50,6 +50,21 @@ MutationResult ClusterCoordinator::Impl::submit(const MutationRequest& request) 
   auto slot = std::make_shared<detail::RequestSlot>();
   {
     std::lock_guard<std::mutex> lock(queue_mutex);
+    if (!running.load()) {
+      // No commit thread can answer this request. Distinguish "never started"
+      // from "already stopped" instead of waiting forever for a result.
+      if (stopping) {
+        return MutationResult::rejected(RejectionReason::ShuttingDown, ErrorStage::Commit,
+                                        request.cluster.value(),
+                                        "coordinator has been stopped and accepts no new mutations",
+                                        "shutting_down");
+      }
+      return MutationResult::rejected(RejectionReason::NotReady, ErrorStage::Commit,
+                                      request.cluster.value(),
+                                      "coordinator is not running: call start() before submitting "
+                                      "mutations",
+                                      "not_running");
+    }
     if (stopping) {
       return MutationResult::rejected(RejectionReason::ShuttingDown, ErrorStage::Commit,
                                       request.cluster.value(),
@@ -176,6 +191,7 @@ CoordinatorStartOutcome ClusterCoordinator::start() {
     impl_->stopping = false;
   }
   impl_->commit_thread = std::thread([this]() { impl_->run_commit(); });
+  impl_->running.store(true);
 
   const detail::socket_handle listener = detail::open_listener(impl_->config.bind_address,
                                                                impl_->config.port,
