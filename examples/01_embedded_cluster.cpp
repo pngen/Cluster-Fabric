@@ -64,8 +64,10 @@ int main() {
 
   const SnapshotValidation synthetic_validation =
       coordinator.snapshot().validate(coordinator.state_copy());
-  std::cout << "synthetic current: " << (synthetic_validation.current ? "yes" : "no")
-            << " (fabricated evidence never satisfies a current-evidence requirement)\n";
+  std::cout << "synthetic bound  : current=" << (synthetic_validation.current ? "yes" : "no")
+            << " consumable=" << (synthetic_validation.consumable ? "yes" : "no")
+            << " (generations match, but fabricated evidence never satisfies a current-evidence "
+               "requirement)\n";
 
   // Re-publishing the same racks with evidence an authority actually reports is
   // the only thing that turns the composition current.
