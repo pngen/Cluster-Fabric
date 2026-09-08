@@ -1,0 +1,29 @@
+# Copyright 2026 Summon Software Labs.
+# Licensed under the Apache License, Version 2.0.
+#
+# Normalize every text file to LF in the repository so a fresh clone is
+# byte-identical on every platform. Windows tooling that needs CRLF converts on
+# checkout.
+
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.sln text eol=crlf
+
+CMakeLists.txt text
+*.cmake text
+*.cmake.in text
+*.hpp text
+*.cpp text
+*.cu text
+*.md text
+LICENSE text

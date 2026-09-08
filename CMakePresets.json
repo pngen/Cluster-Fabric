@@ -1,0 +1,60 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": { "major": 3, "minor": 20, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "release",
+      "displayName": "Release (Ninja, MSVC)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CXX_COMPILER": "cl",
+        "CLUSTER_FABRIC_BUILD_TESTS": "ON",
+        "CLUSTER_FABRIC_BUILD_EXAMPLES": "ON",
+        "CLUSTER_FABRIC_BUILD_BENCHMARKS": "ON"
+      }
+    },
+    {
+      "name": "debug",
+      "displayName": "Debug (Ninja, MSVC)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_COMPILER": "cl",
+        "CLUSTER_FABRIC_BUILD_TESTS": "ON",
+        "CLUSTER_FABRIC_BUILD_EXAMPLES": "ON",
+        "CLUSTER_FABRIC_BUILD_BENCHMARKS": "ON"
+      }
+    },
+    {
+      "name": "asan",
+      "displayName": "Release with sanitizers (Ninja, MSVC)",
+      "inherits": "release",
+      "binaryDir": "${sourceDir}/build/asan",
+      "cacheVariables": {
+        "CLUSTER_FABRIC_ENABLE_SANITIZERS": "ON",
+        "CLUSTER_FABRIC_ENABLE_CUDA": "OFF"
+      }
+    },
+    {
+      "name": "nocuda",
+      "displayName": "Release without CUDA",
+      "inherits": "release",
+      "binaryDir": "${sourceDir}/build/nocuda",
+      "cacheVariables": { "CLUSTER_FABRIC_ENABLE_CUDA": "OFF" }
+    }
+  ],
+  "buildPresets": [
+    { "name": "release", "configurePreset": "release" },
+    { "name": "debug", "configurePreset": "debug" },
+    { "name": "asan", "configurePreset": "asan" },
+    { "name": "nocuda", "configurePreset": "nocuda" }
+  ],
+  "testPresets": [
+    { "name": "release", "configurePreset": "release", "output": { "outputOnFailure": true } },
+    { "name": "debug", "configurePreset": "debug", "output": { "outputOnFailure": true } },
+    { "name": "asan", "configurePreset": "asan", "output": { "outputOnFailure": true } }
+  ]
+}

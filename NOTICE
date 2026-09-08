@@ -1,0 +1,12 @@
+Cluster Fabric
+Copyright 2026 Summon Software Labs.
+
+This product includes software developed by Summon Software Labs.
+
+The Cluster Fabric source tree contains no third-party source code. It builds
+and tests with a C++20 compiler and CMake alone, with no network access and no
+downloaded dependencies. The optional CUDA evidence probe links the CUDA
+runtime that the user installs; that runtime is not distributed with this
+repository and remains subject to its own license.
+
+The full license text is in the LICENSE file.
